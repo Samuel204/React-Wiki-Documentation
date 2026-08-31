@@ -55,7 +55,7 @@ Il sistema permette di:
 
 ## ☁️ Persistenza
 
-I contenuti della Wiki vengono salvati tramite **jsonStorage.net**, utilizzato come storage remoto.
+I contenuti della Wiki vengono salvati tramite **https://gist.github.com/**, utilizzato come storage remoto.
 
 Il Playground, invece, rappresenta uno spazio di lavoro personale e viene gestito localmente tramite `localStorage`.
 
@@ -68,7 +68,7 @@ In questo modo la documentazione e l'ambiente di pratica rimangono logicamente s
 * JavaScript Vanilla
 * React — esclusivamente per il Playground
 * Markdown
-* jsonstorage.net
+* https://gist.github.com/
 * LocalStorage
 
 L'obiettivo è mantenere la dashboard **leggera, semplice e senza framework**, evitando funzionalità non necessarie.
