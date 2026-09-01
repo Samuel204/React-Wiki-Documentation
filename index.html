@@ -194,7 +194,12 @@
   .side-btn.subtle{background:transparent;border-color:transparent;color:var(--text-dim);}
   .side-btn.subtle:hover{background:var(--bg-sunken);border-color:transparent;color:var(--text);}
   #footer-actions-row{display:flex;gap:6px;}
-  #footer-actions-row .side-btn{flex:1;padding:9px 6px;}
+  #footer-actions-row .side-btn{flex:1;padding:8px 4px;flex-direction:column;gap:3px;}
+  #footer-actions-row .side-btn .btn-label{
+    font-size:9.5px;font-weight:600;letter-spacing:.2px;
+    color:inherit;line-height:1;
+  }
+
 
   /* ---- DOC PANEL (centro) ---- */
   #doc-panel{
@@ -454,12 +459,15 @@
       <div id="footer-actions-row">
         <button class="side-btn icon-only" id="btn-upload-md" title="Carica file .md">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 8 12 3 17 8"/><path d="M5 21h14"/></svg>
+          <span class="btn-label">Carica</span>
         </button>
         <button class="side-btn icon-only subtle" id="btn-export-current" disabled title="Esporta file corrente">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><path d="M12 15V3"/></svg>
+          <span class="btn-label">Corrente</span>
         </button>
         <button class="side-btn icon-only subtle" id="btn-export-all" title="Esporta tutti i file">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 8.5l8.7 5 8.7-5"/><path d="M12 21.5V13"/></svg>
+          <span class="btn-label">Tutti</span>
         </button>
       </div>
     </div>
@@ -551,7 +559,7 @@
     <div id="settings-status-msg"></div>
     <div class="modal-actions">
       <button class="btn-secondary" id="btn-close-settings">Chiudi</button>
-      <button class="btn-secondary" id="btn-init-bin">✨ Crea nuovo Gist</button>
+      <button class="btn-secondary" id="btn-init-bin">Crea nuovo Gist</button>
       <button class="btn-primary" id="btn-save-settings">Salva</button>
     </div>
   </div>
