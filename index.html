@@ -105,23 +105,42 @@
   #sync-status.status-error .pulse{background:var(--danger);}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 
-  /* ---- VIEWER / ADMIN MODE ---- */
-  #mode-badge{
-    font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;
-    letter-spacing:.3px;white-space:nowrap;
-    cursor:pointer;
-    border:1px solid transparent;
-    transition:opacity .15s;
+  /* ---- VIEWER / ADMIN MODE SWITCH ---- */
+  #mode-switch{
+    position:relative;display:inline-flex;align-items:center;
+    background:var(--bg-sunken);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:3px;gap:0;flex-shrink:0;
+    user-select:none;
   }
-  #mode-badge:hover{ opacity:.75; }
-  #mode-badge.viewer{
-    background:var(--bg-sunken);color:var(--text-faint);
-    border-color:var(--border);
+  #mode-switch .knob{
+    position:absolute;top:3px;bottom:3px;left:3px;
+    width:calc(50% - 3px);
+    border-radius:999px;
+    background:var(--bg);
+    box-shadow:0 1px 3px rgba(16,24,40,.12);
+    transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
+    pointer-events:none;
   }
-  #mode-badge.admin{
-    background:rgba(22,163,74,.12);color:var(--ok);
-    border-color:rgba(22,163,74,.25);
+  #mode-switch.admin .knob{
+    transform:translateX(100%);
+    background:rgba(22,163,74,.14);
+    box-shadow:inset 0 0 0 1px rgba(22,163,74,.3);
   }
+  #mode-switch .mode-opt{
+    position:relative;z-index:1;
+    background:none;border:none;
+    min-width:62px;text-align:center;
+    font-size:11.5px;font-weight:700;letter-spacing:.3px;
+    padding:4px 10px;border-radius:999px;
+    color:var(--text-faint);
+    transition:color .15s;white-space:nowrap;
+  }
+  #mode-switch .mode-opt:hover:not(.active){color:var(--text);}
+  #mode-switch .mode-opt.active{color:var(--text-dim);}
+  #mode-switch.admin .mode-opt.active{color:var(--ok);}
+  #mode-switch .mode-opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
   /* in viewer mode nascondi i controlli di editing */
   body.viewer-mode #btn-new-category,
@@ -453,7 +472,11 @@
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
   </button>
   <div id="brand"><span class="dot"></span><span class="full">Learning Wiki</span></div>
-  <button id="mode-badge" class="viewer" title="Clicca per cambiare modalità">Viewer</button>
+  <div id="mode-switch" class="viewer" role="group" aria-label="Modalità" title="Cambia modalità">
+    <span class="knob"></span>
+    <button type="button" class="mode-opt active" data-mode="viewer" aria-pressed="true">Viewer</button>
+    <button type="button" class="mode-opt" data-mode="admin" aria-pressed="false">Admin</button>
+  </div>
   <div id="topbar-spacer"></div>
   <div id="sync-status" class="status-idle" title="Stato sincronizzazione">
     <span class="pulse"></span><span id="sync-status-text">non configurato</span>
@@ -705,28 +728,36 @@
   function setAdminMode(on){
     isAdminMode = on;
     document.body.classList.toggle("viewer-mode", !on);
-    var badge = document.getElementById("mode-badge");
-    badge.textContent = on ? "Admin" : "Viewer";
-    badge.className = on ? "admin" : "viewer";
+    var sw = document.getElementById("mode-switch");
+    if(!sw) return;
+    sw.classList.toggle("admin", on);
+    sw.classList.toggle("viewer", !on);
+    Array.prototype.forEach.call(sw.querySelectorAll(".mode-opt"), function(btn){
+      var active = (btn.getAttribute("data-mode") === "admin") === on;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    });
   }
 
-  // Aggiungi subito dopo:
-  document.getElementById("mode-badge").addEventListener("click", function(){
-    if(isAdminMode){
-      // Admin → torna Viewer: chiede conferma e pulisce il token
+
+  document.getElementById("mode-switch").addEventListener("click", function(e){
+    var btn = e.target.closest(".mode-opt");
+    if(!btn) return;
+    var wantAdmin = btn.getAttribute("data-mode") === "admin";
+    if(wantAdmin === isAdminMode) return;
+
+    if(wantAdmin){
+      // Viewer → Admin: serve il token, setAdminMode(true) avviene
+      // nel flusso di btn-save-settings dopo il pull riuscito
+      openSettings();
+    } else {
       if(!confirm("Uscire dalla modalità Admin e tornare a Viewer?")) return;
       settings.githubToken = "";
       saveSettingsLocal();
       setAdminMode(false);
-    } else {
-      // Viewer → Admin: apre la modale impostazioni
-      openSettings();
-      // quando il token viene salvato con successo, setAdminMode(true) viene già
-      // chiamato dal flusso btn-save-settings, ma dobbiamo agganciarlo:
-      // lo gestiamo sotto in btn-save-settings
+      refreshSyncStatusIdle();
     }
   });
-
 
   /* =========================================================
      STORAGE HELPERS
