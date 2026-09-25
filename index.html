@@ -281,10 +281,58 @@
     outline:none;flex:1;min-width:120px;padding:4px 2px;border-radius:5px;
   }
   #file-title-input:focus{background:var(--bg);}
-  #file-cat-select{
-    background:var(--bg);border:1px solid var(--border);color:var(--text-dim);
-    border-radius:7px;padding:6px 8px;font-size:12px;outline:none;
+  .category-picker{
+    position:relative;flex-shrink:0;
   }
+  .category-picker-toggle{
+    /*min-width:148px;*/
+    height:30px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:0 10px 0 11px;
+    background:var(--bg);border:1px solid var(--border);
+    border-radius:9px;color:var(--text-dim);
+    font-size:12.5px;font-weight:600;
+    transition:border-color .15s ease, box-shadow .15s ease, color .15s ease, background .15s ease;
+  }
+  .category-picker-toggle:hover{
+    color:var(--text);border-color:#c8cdd4;background:#fff;
+  }
+  .category-picker.open .category-picker-toggle{
+    color:var(--wiki-accent);border-color:var(--wiki-accent);
+    box-shadow:0 0 0 3px var(--wiki-accent-dim);
+  }
+  .category-picker-toggle .category-icon{color:var(--wiki-accent);flex-shrink:0;}
+  .category-picker-toggle .category-label{
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left;
+  }
+  .category-picker-toggle .chev-down{
+    color:var(--text-faint);flex-shrink:0;transition:transform .18s ease;
+  }
+  .category-picker.open .category-picker-toggle .chev-down{transform:rotate(180deg);}
+  .category-dropdown{
+    position:absolute;top:calc(100% + 7px);right:0;z-index:55;
+    min-width:220px;max-width:280px;
+    display:none;flex-direction:column;gap:2px;
+    padding:6px;background:var(--bg);
+    border:1px solid var(--border);border-radius:12px;
+    box-shadow:0 14px 32px rgba(16,24,40,.14);
+  }
+  .category-picker.open .category-dropdown{display:flex;}
+  .category-option{
+    width:100%;display:flex;align-items:center;gap:9px;
+    padding:9px 10px;background:transparent;border:none;border-radius:8px;
+    color:var(--text-dim);font-size:13px;font-weight:500;text-align:left;
+  }
+  .category-option:hover{background:var(--bg-sunken);color:var(--text);}
+  .category-option.selected{
+    background:var(--wiki-accent-dim);color:var(--wiki-accent);font-weight:600;
+  }
+  .category-option .option-name{
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;
+  }
+  .category-option .check{color:var(--wiki-accent);flex-shrink:0;}
   .icon-btn{
     background:var(--bg);border:1px solid var(--border);color:var(--text-dim);
     border-radius:7px;padding:6px 11px;font-size:12px;font-weight:500;
@@ -354,8 +402,9 @@
     padding:2px 5px;border-radius:5px;font-family:var(--font-mono);font-size:.85em;
   }
   #md-viewer pre{
-    background:var(--bg-sunken);border:1px solid var(--border);border-radius:9px;
-    padding:14px 16px;overflow-x:auto;
+    background:#fff;
+    padding:14px 16px;
+    overflow-x:auto;
   }
   #md-viewer pre code{background:none;border:none;padding:0;}
   #md-viewer blockquote{
@@ -370,23 +419,147 @@
   #md-viewer hr{border:none;border-top:1px solid var(--border);margin:24px 0;}
 
   /* ---- "Prova questo esempio" nei code block ---- */
-  .code-example-wrap{margin:16px 0;border:1px solid var(--border);border-radius:9px;overflow:hidden;}
-  .code-example-wrap pre{margin:0;border:none;border-radius:0;}
+  .code-example-wrap{
+    margin:20px 0;
+    overflow:hidden;
+    border:0.5px solid #d9dce5;
+    border-radius:12px;
+    background: rgba(241, 242, 247, 0.73);
+  }
+  .code-example-wrap pre{
+    margin:0;
+    padding:16px 0;
+    overflow-x:auto;
+    border:none;
+    border-radius:0;
+    background:#eef0f4;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.72);
+  }
+  .code-example-wrap pre code{
+    display:block;
+    min-width:max-content;
+    padding:0;
+    border:none;
+    background:transparent;
+    counter-reset:code-line;
+    font-size:12.5px;
+    line-height:1.75;
+  }
+  .code-example-wrap .code-line{
+    display:block;
+    min-height:1.75em;
+    padding:0 18px 0 58px;
+    position:relative;
+  }
+  .code-example-wrap .code-line::before{
+    content:counter(code-line);
+    counter-increment:code-line;
+    position:absolute;
+    top:0;
+    left:0;
+    width:38px;
+    padding-right:10px;
+    color:#b0b7c1;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    text-align:right;
+    user-select:none;
+  }
   .code-example-header{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:6px 10px;background:var(--bg-sunken);border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    min-height:48px;
+    padding:8px 10px 8px 14px;
+    border-bottom:1px solid #d9dce5;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.95);
+  }
+  .code-example-meta{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+  }
+  .code-example-meta::before{
+    content:"";
+    width:8px;
+    height:8px;
+    flex-shrink:0;
+    border-radius:50%;
+    background:var(--play-accent);
+    box-shadow:0 0 0 4px var(--play-accent-dim);
   }
   .code-example-header .lang-label{
-    font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);
-    text-transform:uppercase;letter-spacing:.5px;
+    color:var(--play-accent);
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:.6px;
+    text-transform:uppercase;
+  }
+  .code-example-header .example-kind{
+    overflow:hidden;
+    color: var(--text-dim);
+    font-size:11.5px;
+    font-weight:500;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .code-example-actions{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-shrink:0;
+  }
+  .copy-example-btn,
+  .try-example-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:30px;
+    border-radius:8px;
+    font-size:11.5px;
+    font-weight:600;
+    white-space:nowrap;
+    transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease;
+  }
+  .copy-example-btn{
+    padding:0 9px;
+    border:1px solid transparent;
+    background:transparent;
+    color:var(--text-dim);
+  }
+  .copy-example-btn:hover{
+    background:var(--bg-sunken);
+    border-color:var(--border);
+    color:var(--text);
+  }
+  .copy-example-btn.copied{
+    color:var(--ok);
   }
   .try-example-btn{
-    background:var(--play-accent-dim);border:1px solid var(--play-accent);color:var(--play-accent);
-    font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:6px;
-    display:flex;align-items:center;gap:5px;white-space:nowrap;
+    padding:0 11px;
+    border:1px solid var(--play-accent);
+    background:var(--play-accent);
+    color:#fff;
+    box-shadow:0 1px 2px rgba(124,79,224,.2);
   }
-  .try-example-btn:hover{background:var(--play-accent);color:#fff;}
-  #playground-panel.flash{box-shadow:inset 0 0 0 2px var(--play-accent);transition:box-shadow .2s ease;}
+  .try-example-btn:hover{
+    background:#6940ce;
+    border-color:#6940ce;
+    transform:translateY(-1px);
+  }
+  .copy-example-btn:focus-visible,
+  .try-example-btn:focus-visible{
+    outline:2px solid var(--play-accent);
+    outline-offset:2px;
+  }
+  #playground-panel.flash{
+    box-shadow:inset 0 0 0 2px var(--play-accent),var(--card-shadow);
+    transition:box-shadow .2s ease;
+  }
 
   /* ---- RESIZER ---- */
   #resizer{
@@ -476,6 +649,16 @@
     #doc-panel,#playground-panel{width:100% !important;display:none;margin-bottom:70px;}
     #doc-panel.mobile-active,#playground-panel.mobile-active{display:flex;}
     #brand span.full{display:none;}
+    .code-example-header{align-items:flex-start;padding:10px;}
+    .code-example-meta{padding:5px 2px;}
+    .code-example-header .example-kind{display:none;}
+    .copy-example-btn{width:30px;padding:0;}
+    .copy-example-btn .btn-text{display:none;}
+    .try-example-btn{padding:0 9px;}
+    .try-example-btn .btn-text{font-size:0;}
+    .try-example-btn .btn-text::after{content:"Prova";font-size:11.5px;}
+    .code-example-wrap .code-line{padding-left:48px;padding-right:14px;}
+    .code-example-wrap .code-line::before{width:31px;padding-right:7px;}
   }
 
   /* ---------- MODAL ---------- */
@@ -578,7 +761,19 @@
     <div id="file-panel">
       <div id="file-header">
         <input type="text" id="file-title-input" placeholder="Titolo file">
-        <select id="file-cat-select"></select>
+        <div id="file-category-picker" class="category-picker">
+          <button class="category-picker-toggle" id="btn-category-toggle" type="button"
+                  aria-haspopup="listbox" aria-expanded="false" aria-label="Cambia categoria">
+            <svg class="category-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            </svg>
+            <span class="category-label" id="category-label">Categoria</span>
+            <svg class="chev-down" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div id="category-dropdown" class="category-dropdown" role="listbox" aria-label="Categorie"></div>
+        </div>
         <div id="file-actions-menu">
           <button class="icon-btn" id="btn-actions-toggle" aria-haspopup="true" aria-expanded="false">
             Azioni
@@ -1001,6 +1196,43 @@
     attachTryExampleButtons();
   }
 
+  function copyExampleCode(code, btn){
+    function setCopiedState(){
+      btn.classList.add("copied");
+      btn.setAttribute("aria-label", "Codice copiato");
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="btn-text">Copiato</span>';
+
+      setTimeout(function(){
+        btn.classList.remove("copied");
+        btn.setAttribute("aria-label", "Copia codice");
+        btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="btn-text">Copia</span>';
+      }, 1800);
+    }
+
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(code).then(setCopiedState).catch(function(){});
+      return;
+    }
+
+    var textarea = document.createElement("textarea");
+    textarea.value = code;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+    setCopiedState();
+  }
+
+  function addLineNumbers(codeEl){
+    var lines = codeEl.innerHTML.split("\n");
+    codeEl.innerHTML = lines.map(function(line){
+      return '<span class="code-line">' + (line || "&nbsp;") + "</span>";
+    }).join("");
+  }
+
   function attachTryExampleButtons(){
     var blocks = document.querySelectorAll("#md-viewer pre code");
     blocks.forEach(function(codeEl, i){
@@ -1009,22 +1241,51 @@
       var pre = codeEl.parentElement;
       if(RUNNABLE_LANGS.indexOf(entry.lang) === -1) return;
 
+      addLineNumbers(codeEl);
+
       var wrap = document.createElement("div");
       wrap.className = "code-example-wrap";
+
       var header = document.createElement("div");
       header.className = "code-example-header";
+
+      var meta = document.createElement("div");
+      meta.className = "code-example-meta";
 
       var label = document.createElement("span");
       label.className = "lang-label";
       label.textContent = entry.lang || "code";
 
-      var btn = document.createElement("button");
-      btn.className = "try-example-btn";
-      btn.innerHTML = "▶ Prova nel Playground";
-      btn.addEventListener("click", function(){ loadIntoPlayground(entry.code); });
+      var kind = document.createElement("span");
+      kind.className = "example-kind";
+      kind.textContent = "Esempio interattivo";
 
-      header.appendChild(label);
-      header.appendChild(btn);
+      var actions = document.createElement("div");
+      actions.className = "code-example-actions";
+
+      var copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "copy-example-btn";
+      copyBtn.setAttribute("aria-label", "Copia codice");
+      copyBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"/></svg><span class="btn-text">Copia</span>';
+      copyBtn.addEventListener("click", function(){
+        copyExampleCode(entry.code, copyBtn);
+      });
+
+      var tryBtn = document.createElement("button");
+      tryBtn.type = "button";
+      tryBtn.className = "try-example-btn";
+      tryBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><polygon points="6 4 19 12 6 20"/></svg><span class="btn-text">Apri nel Playground</span>';
+      tryBtn.addEventListener("click", function(){
+        loadIntoPlayground(entry.code);
+      });
+
+      meta.appendChild(label);
+      meta.appendChild(kind);
+      actions.appendChild(copyBtn);
+      actions.appendChild(tryBtn);
+      header.appendChild(meta);
+      header.appendChild(actions);
 
       pre.parentNode.insertBefore(wrap, pre);
       wrap.appendChild(header);
@@ -1110,15 +1371,40 @@
   }
 
   function renderCategorySelect(){
-    var sel = document.getElementById("file-cat-select");
-    var current = sel.value;
-    sel.innerHTML = "";
+    var dropdown = document.getElementById("category-dropdown");
+    var label = document.getElementById("category-label");
+    var toggle = document.getElementById("btn-category-toggle");
+    var activeFile = getActiveFile();
+    var selectedCategory = activeFile ? activeFile.category : "";
+
+    label.textContent = selectedCategory || "Categoria";
+    toggle.disabled = state.wiki.categories.length === 0;
+    dropdown.innerHTML = "";
+
     state.wiki.categories.forEach(function(cat){
-      var opt = document.createElement("option");
-      opt.value = cat; opt.textContent = cat;
-      sel.appendChild(opt);
+      var option = document.createElement("button");
+      var isSelected = cat === selectedCategory;
+
+      option.type = "button";
+      option.className = "category-option" + (isSelected ? " selected" : "");
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-selected", isSelected ? "true" : "false");
+      option.setAttribute("data-category", cat);
+
+      var name = document.createElement("span");
+      name.className = "option-name";
+      name.textContent = cat;
+      option.appendChild(name);
+
+      if(isSelected){
+        var check = document.createElement("span");
+        check.className = "check";
+        check.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>';
+        option.appendChild(check);
+      }
+
+      dropdown.appendChild(option);
     });
-    if(current) sel.value = current;
   }
 
   function escapeHtml(s){
@@ -1177,7 +1463,6 @@
     document.getElementById("file-panel").classList.add("active");
     document.getElementById("file-title-input").value = file.title;
     renderCategorySelect();
-    document.getElementById("file-cat-select").value = file.category;
     renderMarkdown(file.content);
     document.getElementById("md-editor").value = file.content;
     setEditMode(false);
@@ -1229,12 +1514,49 @@
     file.title = e.target.value; file.updatedAt = Date.now();
     renderSidebar(); scheduleSync();
   });
-  document.getElementById("file-cat-select").addEventListener("change", function(e){
-    var file = getActiveFile();
-    if(!file) return;
-    file.category = e.target.value;
-    renderSidebar(); scheduleSync();
-  });
+
+  (function initCategoryPicker(){
+    var picker = document.getElementById("file-category-picker");
+    var toggle = document.getElementById("btn-category-toggle");
+    var dropdown = document.getElementById("category-dropdown");
+
+    function closePicker(){
+      picker.classList.remove("open");
+      toggle.setAttribute("aria-expanded", "false");
+    }
+
+    toggle.addEventListener("click", function(e){
+      e.stopPropagation();
+      if(toggle.disabled) return;
+
+      var willOpen = !picker.classList.contains("open");
+      picker.classList.toggle("open", willOpen);
+      toggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    });
+
+    dropdown.addEventListener("click", function(e){
+      var option = e.target.closest(".category-option");
+      if(!option) return;
+
+      var file = getActiveFile();
+      if(!file) return;
+
+      file.category = option.getAttribute("data-category");
+      file.updatedAt = Date.now();
+      closePicker();
+      renderSidebar();
+      scheduleSync();
+    });
+
+    document.addEventListener("click", function(e){
+      if(!picker.contains(e.target)) closePicker();
+    });
+
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape") closePicker();
+    });
+  })();
+
   document.getElementById("btn-toggle-edit").addEventListener("click", function(){ setEditMode(!isEditingFile); });
 
   /* ---- Menu Azioni (dropdown) ---- */
