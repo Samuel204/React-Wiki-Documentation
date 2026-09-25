@@ -216,6 +216,7 @@
   .category-head .del-cat{opacity:0;color:var(--text-faint);padding:2px 4px;border-radius:4px;display:flex;}
   .category-head:hover .del-cat{opacity:1;}
   .category-head .del-cat:hover{color:var(--danger);}
+
   .file-list{padding-left:8px;}
   .file-item{
     display:flex;align-items:center;gap:8px;
@@ -293,6 +294,44 @@
   .icon-btn.danger:hover{color:var(--danger);border-color:var(--danger);background:var(--danger-dim);}
   .icon-btn.accent{color:#fff;background:var(--accent);border-color:var(--accent);}
   .icon-btn.accent:hover{opacity:.9;color:#fff;}
+
+  /* ---- MENU AZIONI (dropdown nel file-header) ---- */
+  #file-actions-menu{position:relative;display:inline-flex;}
+  /* nascondi il menu Azioni in viewer mode (solo admin) */
+  body.viewer-mode #file-actions-menu{ display:none !important; }
+  #btn-actions-toggle{
+    display:flex;align-items:center;gap:6px;
+  }
+  #btn-actions-toggle .chev-down{
+    transition:transform .15s;
+  }
+  #file-actions-menu.open #btn-actions-toggle .chev-down{
+    transform:rotate(180deg);
+  }
+  #actions-dropdown{
+    position:absolute;top:calc(100% + 6px);right:0;z-index:50;
+    min-width:170px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    box-shadow:0 10px 30px rgba(16,24,40,.14);
+    padding:6px;
+    display:none;flex-direction:column;gap:2px;
+  }
+  #file-actions-menu.open #actions-dropdown{display:flex;}
+  .actions-item{
+    display:flex;align-items:center;gap:10px;
+    background:none;border:none;text-align:left;
+    padding:8px 10px;border-radius:7px;
+    font-size:13px;font-weight:500;color:var(--text);
+    width:100%;
+  }
+  .actions-item svg{flex-shrink:0;color:var(--text-dim);}
+  .actions-item:hover{background:var(--bg-sunken);}
+  .actions-item.danger{color:var(--danger);}
+  .actions-item.danger svg{color:var(--danger);}
+  .actions-item.danger:hover{background:var(--danger-dim);}
+
   #file-body{flex:1;overflow-y:auto;min-height:0;}
   #md-viewer{padding:24px 30px;max-width:760px;margin:0 auto;line-height:1.7;font-size:15px;}
   #md-editor{
@@ -540,14 +579,22 @@
       <div id="file-header">
         <input type="text" id="file-title-input" placeholder="Titolo file">
         <select id="file-cat-select"></select>
-        <button class="icon-btn" id="btn-toggle-edit">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-          Modifica
-        </button>
-        <button class="icon-btn danger" id="btn-delete-file">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-          Elimina
-        </button>
+        <div id="file-actions-menu">
+          <button class="icon-btn" id="btn-actions-toggle" aria-haspopup="true" aria-expanded="false">
+            Azioni
+            <svg class="chev-down" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="actions-dropdown" role="menu">
+            <button class="actions-item" id="btn-toggle-edit" role="menuitem">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              Modifica
+            </button>
+            <button class="actions-item danger" id="btn-delete-file" role="menuitem">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+              Elimina
+            </button>
+          </div>
+        </div>
       </div>
       <div id="file-body">
         <div id="md-viewer"></div>
@@ -1159,7 +1206,8 @@
     isEditingFile = on;
     document.getElementById("md-viewer").classList.toggle("hidden", on);
     document.getElementById("md-editor").classList.toggle("active", on);
-    document.getElementById("btn-toggle-edit").innerHTML = (on ? ICON_EYE : ICON_PENCIL) + (on ? "Anteprima" : "Modifica");
+    var editIcon = on ? ICON_EYE : ICON_PENCIL;
+    document.getElementById("btn-toggle-edit").innerHTML = editIcon + (on ? "Anteprima" : "Modifica");
   }
 
   function deleteActiveFile(){
@@ -1188,6 +1236,35 @@
     renderSidebar(); scheduleSync();
   });
   document.getElementById("btn-toggle-edit").addEventListener("click", function(){ setEditMode(!isEditingFile); });
+
+  /* ---- Menu Azioni (dropdown) ---- */
+  (function initActionsMenu(){
+    var menu = document.getElementById("file-actions-menu");
+    var toggle = document.getElementById("btn-actions-toggle");
+    function closeMenu(){
+      menu.classList.remove("open");
+      toggle.setAttribute("aria-expanded", "false");
+    }
+    toggle.addEventListener("click", function(e){
+      e.stopPropagation();
+      var willOpen = !menu.classList.contains("open");
+      menu.classList.toggle("open", willOpen);
+      toggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    });
+    // chiudi il menu dopo aver cliccato una voce
+    menu.querySelectorAll(".actions-item").forEach(function(item){
+      item.addEventListener("click", closeMenu);
+    });
+    // chiudi cliccando fuori
+    document.addEventListener("click", function(e){
+      if(!menu.contains(e.target)) closeMenu();
+    });
+    // chiudi con Esc
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape") closeMenu();
+    });
+  })();
+
   document.getElementById("md-editor").addEventListener("input", function(e){
     var file = getActiveFile();
     if(!file) return;
