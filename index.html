@@ -1465,7 +1465,9 @@
           return;
         }
 
-        collapsedCategories[cat] = !collapsedCategories[cat];
+        // aperto sse === false; qualsiasi altro valore (incluso undefined) è "chiuso"
+        var isOpen = collapsedCategories[cat] === false;
+        collapsedCategories[cat] = isOpen ? true : false;
         renderSidebar();
       });
 
