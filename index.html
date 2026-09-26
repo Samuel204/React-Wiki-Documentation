@@ -1835,22 +1835,36 @@
       "<div id='root'></div>",
       "<div id='err-overlay'></div>",
       "<script>",
-      "window.onerror = function(msg){ showError(msg); return true; };",
-      "function showError(msg){",
-      "  var o = document.getElementById('err-overlay');",
-      "  o.style.display='block'; o.textContent = 'Errore: ' + msg;",
-      "  parent.postMessage({ __pg: true, type: 'error', message: String(msg) }, '*');",
-      "}",
-      "var origLog = console.log;",
-      "console.log = function(){",
-      "  origLog.apply(console, arguments);",
-      "  try{ parent.postMessage({ __pg:true, type:'log', message: Array.from(arguments).map(String).join(' ') }, '*'); }catch(e){}",
+      "window.onerror = function(msg, source, lineno, colno, error){",
+      "  var detail = (error && error.stack) ? error.stack : msg;",
+      "  showError(detail, lineno, colno);",
+      "  return true;",
       "};",
+      "window.addEventListener('unhandledrejection', function(ev){",
+      "  var r = ev.reason;",
+      "  showError('Promise non gestita: ' + ((r && r.stack) || r), null, null);",
+      "});",
+      "function showError(msg, lineno, colno){",
+      "  var pos = (lineno != null) ? (' (riga ' + lineno + (colno != null ? ', col ' + colno : '') + ')') : '';",
+      "  var o = document.getElementById('err-overlay');",
+      "  o.style.display='block'; o.textContent = 'Errore' + pos + ':\\n' + msg;",
+      "  parent.postMessage({ __pg: true, type: 'error', message: String(msg), line: lineno, col: colno }, '*');",
+      "}",
       "<\/script>",
-      "<script type='text/babel' data-presets='react'>",
-      "try {",
-      userCode,
-      "} catch(e) { showError(e.message); }",
+      "<script>",
+      "(function(){",
+      "  try {",
+      "    var compiled = Babel.transform(",
+      "      " + JSON.stringify(userCode) + ",",
+      "      { presets: ['react'], filename: 'playground.jsx' }",
+      "    ).code;",
+      "    var fn = new Function(compiled);",
+      "    fn();",
+      "  } catch(e) {",
+      "    var loc = (e.loc ? (' (riga ' + e.loc.line + ', col ' + e.loc.column + ')') : '');",
+      "    showError((e.message || String(e)) + loc, e.loc && e.loc.line, e.loc && e.loc.column);",
+      "  }",
+      "})();",
       "<\/script>",
       "</body></html>"
     ].join("\n");
@@ -1879,14 +1893,20 @@
   }
 
   window.addEventListener("message", function(e){
-    if(!e.data || !e.data.__pg) return;
-    logToConsole((e.data.type === "error" ? "✖ " : "› ") + e.data.message, e.data.type === "error");
+    var d = e.data;
+    if(!d || !d.__pg) return;
+    if(d.type === "error"){
+      var where = (d.line != null) ? (" [riga " + d.line + (d.col != null ? ", col " + d.col : "") + "]") : "";
+      logToConsole("✖ " + d.message + where, true);
+    } else if(d.type === "log"){
+      logToConsole(d.message, false);
+    }
   });
 
   document.getElementById("btn-run").addEventListener("click", runPlayground);
   document.getElementById("btn-reset").addEventListener("click", resetPlayground);
   document.getElementById("btn-toggle-console").addEventListener("click", function(){
-    document.getElementById("pg-console").classList.toggle("visible");
+    document.getElementById("pg-console").classList.add("visible");
   });
 
   /* =========================================================
