@@ -620,8 +620,23 @@
   #pg-toolbar .spacer{flex:1;}
   #pg-autosave{font-size:11px;color:var(--pg-text-faint);font-family:var(--font-mono);}
   #pg-split{flex:1;display:flex;flex-direction:column;min-height:0;}
-  #pg-editor-wrap{flex:1 1 55%;min-height:80px;display:flex;flex-direction:column;border-bottom:1px solid var(--pg-border);}
+  #pg-editor-wrap{flex:1 1 55%;min-height:80px;display:flex;flex-direction:column;border-bottom:none;}
   #pg-editor-wrap .CodeMirror{flex:1;height:100%;font-family:var(--font-mono);font-size:12.5px;}
+  #pg-split-resizer{
+    height:12px;flex-shrink:0;cursor:row-resize;position:relative;
+    background:var(--pg-bg-elevated);touch-action:none;
+  }
+  #pg-split-resizer::before{
+    content:"";position:absolute;left:0;right:0;top:50%;height:3px;
+    transform:translateY(-50%);background:transparent;
+    transition:background .15s ease;
+  }
+  #pg-split-resizer::after{
+    content:"";position:absolute;left:50%;top:50%;width:28px;height:2px;
+    transform:translate(-50%,-50%);border-radius:2px;background:var(--pg-text-faint);
+  }
+  #pg-split-resizer:hover::before,
+  #pg-split-resizer.dragging::before{background:var(--play-accent);}
   #pg-preview-wrap{flex:1 1 45%;min-height:80px;display:flex;flex-direction:column;background:var(--pg-bg);}
   #pg-iframe{flex:1;border:none;width:100%;background:var(--pg-bg);}
   #pg-console{
@@ -840,16 +855,19 @@
     <div id="pg-split">
       <div id="pg-editor-wrap">
         <div style="padding:4px 12px; font-size:10px; color:var(--pg-text-faint);
-    font-family:var(--font-mono); background:var(--pg-bg-elevated);
-    border-bottom:1px solid var(--pg-border); letter-spacing:.5px;">
+        font-family:var(--font-mono); background:var(--pg-bg-elevated);
+        border-bottom:1px solid var(--pg-border); letter-spacing:.5px;">
           EDITOR
         </div>
         <textarea id="pg-textarea"></textarea>
       </div>
+
+      <div id="pg-split-resizer" role="separator" aria-label="Ridimensiona editor e anteprima"></div>
+
       <div id="pg-preview-wrap">
         <div style="padding:4px 12px; font-size:10px; color:var(--pg-text-faint);
-    font-family:var(--font-mono); background:var(--pg-bg);
-    border-bottom:1px solid var(--pg-border); letter-spacing:.5px;">
+        font-family:var(--font-mono); background:var(--pg-bg);
+        border-bottom:1px solid var(--pg-border); letter-spacing:.5px;">
           PREVIEW
         </div>
         <iframe id="pg-iframe" sandbox="allow-scripts"></iframe>
@@ -1793,6 +1811,53 @@
       localStorage.setItem(LS_LAYOUT, pgPanel.style.width);
       if(cm) cm.refresh();
     });
+  })();
+
+  /*Select the playground split resizer*/
+  (function initPlaygroundSplitResizer(){
+    var split = document.getElementById("pg-split");
+    var editor = document.getElementById("pg-editor-wrap");
+    var preview = document.getElementById("pg-preview-wrap");
+    var resizer = document.getElementById("pg-split-resizer");
+    var iframe = document.getElementById("pg-iframe");
+    var dragging = false;
+
+    resizer.addEventListener("pointerdown", function(e){
+      dragging = true;
+      resizer.classList.add("dragging");
+      document.body.style.userSelect = "none";
+      iframe.style.pointerEvents = "none";
+      resizer.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+
+    resizer.addEventListener("pointermove", function(e){
+      if(!dragging) return;
+
+      var splitRect = split.getBoundingClientRect();
+      var minHeight = 110;
+      var maxHeight = splitRect.height - resizer.offsetHeight - minHeight;
+      var editorHeight = e.clientY - splitRect.top;
+
+      editorHeight = Math.max(minHeight, Math.min(editorHeight, maxHeight));
+      editor.style.flex = "0 0 " + editorHeight + "px";
+      preview.style.flex = "1 1 auto";
+
+      if(cm) cm.refresh();
+    });
+
+    function stopDragging(){
+      if(!dragging) return;
+      dragging = false;
+      resizer.classList.remove("dragging");
+      document.body.style.userSelect = "";
+      iframe.style.pointerEvents = "";
+
+      if(cm) cm.refresh();
+    }
+
+    resizer.addEventListener("pointerup", stopDragging);
+    resizer.addEventListener("pointercancel", stopDragging);
   })();
 
   /* =========================================================
