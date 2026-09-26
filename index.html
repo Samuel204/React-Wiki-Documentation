@@ -988,6 +988,7 @@
   var isEditingFile = false;
   var syncTimer = null;
   var cm = null;
+  var lastSyncError = "";
   var collapsedCategories = {};
   var isAdminMode = false;
   var titleDebounceTimer = null;
@@ -1068,6 +1069,25 @@
   var GIST_API = "https://api.github.com/gists";
   var GIST_FILENAME = "learning-wiki-data.json";
   function isConfigured(){ return !!(settings.githubToken && settings.gistId); }
+
+  // Estrae un messaggio d'errore leggibile dalla risposta di GitHub
+  function extractHttpError(res){
+    return res.text().then(function(text){
+      var detail = "";
+      try{
+        var json = JSON.parse(text);
+        detail = json.message || "";
+        if(json.errors && json.errors.length){
+          detail += " (" + json.errors.map(function(e){
+            return e.message || (e.field + " " + e.code);
+          }).join("; ") + ")";
+        }
+      }catch(e){}
+      var msg = "HTTP " + res.status + (res.statusText ? " " + res.statusText : "");
+      if(detail) msg += " – " + detail;
+      return new Error(msg);
+    });
+  }
   // Aggiungi: lettura pubblica senza token (per viewer mode)
   function pullPublic(){
     var gistId = settings.gistId || PUBLIC_GIST_ID;
@@ -1100,10 +1120,11 @@
             });
   }
 
-  function setSyncStatus(status, text){
+  function setSyncStatus(status, text, detail){
     var el = document.getElementById("sync-status");
     el.className = "status-" + status;
     document.getElementById("sync-status-text").textContent = text;
+    el.title = detail || "Apri impostazioni sincronizzazione";
   }
   function refreshSyncStatusIdle(){
     if(!isConfigured()) setSyncStatus("idle", "non configurato");
@@ -1133,10 +1154,10 @@
     if(!isConfigured()) return Promise.resolve(false);
     setSyncStatus("syncing", "sincronizzazione...");
     return fetch(GIST_API + "/" + settings.gistId, { headers: ghHeaders() })
-    .then(function(res){
-      if(!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    }).then(function(data){
+            .then(function(res){
+              if(!res.ok) return extractHttpError(res).then(function(err){ throw err; });
+              return res.json();
+            }).then(function(data){
       var file = data && data.files && data.files[GIST_FILENAME];
       if(!file) throw new Error("File non trovato nel gist");
       var contentPromise = file.truncated
@@ -1152,11 +1173,12 @@
         setSyncStatus("synced", "sincronizzato");
         return true;
       });
-    }).catch(function(err){
-      console.warn("Pull gist fallito:", err);
-      setSyncStatus("error", "errore lettura");
-      return false;
-    });
+            }).catch(function(err){
+              console.warn("Pull gist fallito:", err);
+              setSyncStatus("error", "errore lettura", err.message);
+              lastSyncError = err.message;
+              return false;
+            });
   }
 
   function pushToRemote(){
@@ -1169,12 +1191,14 @@
       headers: ghHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(body)
     }).then(function(res){
-      if(!res.ok) throw new Error("HTTP " + res.status);
+      if(!res.ok) return extractHttpError(res).then(function(err){ throw err; });
+      lastSyncError = "";
       setSyncStatus("synced", "sincronizzato");
       return true;
     }).catch(function(err){
       console.warn("Push gist fallito:", err);
-      setSyncStatus("error", "errore salvataggio");
+      setSyncStatus("error", "errore salvataggio", err.message);
+      lastSyncError = err.message;
       return false;
     });
   }
@@ -1188,7 +1212,7 @@
       headers: ghHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(body)
     }).then(function(res){
-      if(!res.ok) throw new Error("HTTP " + res.status);
+      if(!res.ok) return extractHttpError(res).then(function(err){ throw err; });
       return res.json();
     }).then(function(data){
       if(!data || !data.id) throw new Error("Risposta inattesa dal server");
@@ -1198,11 +1222,11 @@
       return true;
     }).catch(function(err){
       console.warn("Creazione gist fallita:", err);
-      setSyncStatus("error", "errore creazione");
+      setSyncStatus("error", "errore creazione", err.message);
+      lastSyncError = err.message;
       return false;
     });
   }
-
 
   function scheduleSync(){
     saveCache();
@@ -2024,7 +2048,13 @@
   function openSettings(){
     document.getElementById("input-github-token").value = "";
     document.getElementById("input-gist-id").value = "";
-    document.getElementById("settings-status-msg").textContent = "";
+    var msg = document.getElementById("settings-status-msg");
+    if(lastSyncError){
+      msg.style.color = "var(--danger)";
+      msg.textContent = "Ultimo errore: " + lastSyncError;
+    } else {
+      msg.textContent = "";
+    }
     document.getElementById("settings-modal").classList.add("visible");
   }
   function closeSettings(){ document.getElementById("settings-modal").classList.remove("visible"); }
@@ -2046,7 +2076,14 @@
       msg.textContent = "Il campo Token contiene un URL, non un token. Incolla solo il token GitHub.";
       return;
     }
-    settings.githubToken = tokenVal;
+    // Se il campo è vuoto ma un token è già salvato, mantieni quello esistente
+    if(tokenVal){
+      settings.githubToken = tokenVal;
+    } else if(!settings.githubToken){
+      msg.style.color = "var(--danger)";
+      msg.textContent = "Inserisci il GitHub Token.";
+      return;
+    }
     var gistId = parseGistId(document.getElementById("input-gist-id").value);
     if(!gistId){
       msg.style.color = "var(--danger)";
