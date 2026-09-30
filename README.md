@@ -39,7 +39,7 @@ Il Playground è **unico e globale**, non viene creato un Playground diverso per
 
 L'ambiente React è già configurato con i principali Hook:
 
-`useState`, `useEffect`, `useRef`, `useMemo`, `useCallback`, `useContext`
+`useState`, `useEffect`, `useRef`, `useMemo`, `useCallback`, `useContext`, `useReducer`
 
 L'utente può:
 - modificare il codice nell'editor
@@ -90,20 +90,6 @@ Il Playground rappresenta uno spazio di lavoro personale e viene gestito **local
 * LocalStorage — persistenza locale del Playground
 
 L'obiettivo è mantenere l'app **leggera, semplice e senza framework**, evitando dipendenze non necessarie.
-
-## UI / UX
-
-Il design è ispirato alle moderne piattaforme di documentazione e agli ambienti di sviluppo.
-
-La UI privilegia:
-
-* minimalismo e leggibilità
-* navigazione rapida tra argomenti
-* codice facilmente consultabile ed eseguibile
-* separazione visiva tra teoria (pannello chiaro) e pratica (pannello scuro)
-* responsive design con navigazione bottom bar su mobile
-* resizer drag-and-drop tra documentazione e Playground su desktop
-* utilizzo in modalità embedded (es. Notion)
 
 ## Obiettivo
 
