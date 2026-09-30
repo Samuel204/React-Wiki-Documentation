@@ -1928,6 +1928,23 @@
       "<div id='root'></div>",
       "<div id='err-overlay'></div>",
       "<script>",
+      "(function(){",
+      "  function serialize(args){",
+      "    return Array.prototype.map.call(args, function(a){",
+      "      if(typeof a === 'string') return a;",
+      "      try { return JSON.stringify(a); } catch(e){ return String(a); }",
+      "    }).join(' ');",
+      "  }",
+      "  ['log','info','warn','error'].forEach(function(level){",
+      "    var orig = console[level];",
+      "    console[level] = function(){",
+      "      parent.postMessage({ __pg: true, type: (level === 'error' || level === 'warn') ? 'error' : 'log', message: serialize(arguments) }, '*');",
+      "      if(orig) orig.apply(console, arguments);",
+      "    };",
+      "  });",
+      "})();",
+      "<\/script>",
+      "<script>",
       "window.onerror = function(msg, source, lineno, colno, error){",
       "  var detail = (error && error.stack) ? error.stack : msg;",
       "  showError(detail, lineno, colno);",
@@ -1966,6 +1983,7 @@
   function runPlayground(){
     var code = cm.getValue();
     document.getElementById("pg-iframe").srcdoc = buildIframeDoc(code);
+    document.getElementById("pg-console").classList.add("visible");
     logToConsole("▶ Esecuzione avviata", false);
   }
 
@@ -1999,7 +2017,7 @@
   document.getElementById("btn-run").addEventListener("click", runPlayground);
   document.getElementById("btn-reset").addEventListener("click", resetPlayground);
   document.getElementById("btn-toggle-console").addEventListener("click", function(){
-    document.getElementById("pg-console").classList.add("visible");
+    document.getElementById("pg-console").classList.toggle("visible");
   });
 
   /* =========================================================
