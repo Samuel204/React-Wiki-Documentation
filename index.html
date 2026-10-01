@@ -2027,7 +2027,10 @@
   document.getElementById("btn-run").addEventListener("click", runPlayground);
   document.getElementById("btn-reset").addEventListener("click", resetPlayground);
   document.getElementById("btn-toggle-console").addEventListener("click", function(){
-    document.getElementById("pg-console").classList.toggle("visible");
+    var box = document.getElementById("pg-console");
+    var willShow = !box.classList.contains("visible");
+    box.classList.toggle("visible", willShow);
+    if(willShow) box.innerHTML = "";
   });
 
   /* =========================================================
